@@ -1,0 +1,116 @@
+Create logo.svg (797x228 pixels)
+Create bg.png (2040x1450 pixels)
+Create nav-bg.png (2040x118 pixels)
+scp images to instance
+
+cd /opt/stack/horizon/openstack_dashboard/
+mkdir -p themes/ghc/static/img
+mkdir -p themes/ghc/templates/auth
+mkdir -p themes/ghc/templates/header
+
+cp /home/stack/logo.svg /opt/stack/horizon/openstack_dashboard/themes/ghc/static/img/logo.svg
+cp /home/stack/logo.svg /opt/stack/horizon/openstack_dashboard/themes/ghc/static/img/logo-splash.svg
+cp /home/stack/bg.png /opt/stack/horizon/openstack_dashboard/themes/ghc/static/img/
+cp /home/stack/nav-bg.png /opt/stack/horizon/openstack_dashboard/themes/ghc/static/img/
+cd themes/ghc
+
+Tell theme to load logo-splash for login screen
+nano templates/auth/_splash.html
+{% load themes %}
+<div class="text-center">
+     <img class="splash-logo" src="{% themable_asset "img/logo-splash.svg" %}">
+</div>
+
+nano templates/header/_brand.html
+{% load branding %}
+{% load themes %}
+
+<a class="navbar-brand" href="{% site_branding_link %}" target="_self">
+  <img class="openstack-logo" src="{% themable_asset 'img/logo.svg' %}"
+alt="{% site_branding %}">
+</a>
+
+Tell theme too import the default variables and styles and then set override for navbar
+nano static/_variables.scss
+@import '/themes/default/variables';
+@import '/themes/default/styles';
+
+$navbar-height: 60px;
+$navbar-default-toggle-hover-bg: rgba(0,0,0,0.1);
+$navbar-default-toggle-icon-bar-bg: #4564E2;
+$navbar-default-toggle-border-color: rgba(0,0,0,0.1);
+
+Tell theme to use the following sass changes:
+nano static/_styles.scss
+#splash {
+   background: url("/dashboard/static/themes/ghc/img/bg.png");
+   background-repeat: no-repeat;
+   background-position: center;
+   background-size: cover;
+   .login .splash-logo {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+.navbar-default {
+  background: url("/dashboard/static/themes/ghc/img/nav-bg.png");
+}
+
+.navbar-brand {
+  /*  height: 50px; */
+  padding-right: 0;
+}
+
+.navbar-brand img {
+  height: 100%;
+}
+
+.topbar .switcher_bar .btn.btn-topnav {
+  color: #4564E2;
+  margin-top: 1em;
+}
+
+.navbar-default .navbar-nav > li > a {
+  color: #4564E2;
+  line-height: 41px;
+}
+
+.navbar-default .navbar-nav > li > a:focus,
+.navbar-default .navbar-nav > li > a:hover {
+  color: #4564E2;
+  background-color: rgba(0,0,0,0.1);
+}
+
+.navbar-default .navbar-nav > .open > a,
+.navbar-default .navbar-nav > .open > a:focus,
+.navbar-default .navbar-nav > .open > a:hover {
+  color: #4564E2;
+  background-color: rgba(0,0,0,0.1);
+}
+
+
+nano ../../local/local_settings.py
+COMPRESS_OFFLINE = False
+COMPRESS_ENABLED = False
+SITE_BRANDING = "Dalmatians Furever"
+SITE_BRANDING_LINK = "http://www.ghc-openstack.org"
+AVAILABLE_THEMES = [
+    ('default', 'Default', 'themes/default'),
+    ('material', 'Material', 'themes/material'),
+    ('ghc', 'ghc', 'themes/ghc'),
+]
+
+
+python /opt/stack/horizon/manage.py collectstatic
+sudo service apache2 restart
+
+tox -e manage -- collectstatic
+
+python /opt/stack/horizon/manage.py compress
+
+nano templates/auth/_splash.html
+{% load themes %}
+<div class="text-center">
+     <img class="splash-logo" src={% themable_asset "img/logo-splash.svg" %}>
+</div>
